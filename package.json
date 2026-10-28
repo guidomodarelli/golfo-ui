@@ -1,6 +1,6 @@
 {
   "name": "@golfo/ui",
-  "version": "2.1.2",
+  "version": "2.2.0",
   "description": "Shared UI components with the customizations extracted from TuTribu.",
   "type": "module",
   "sideEffects": [
