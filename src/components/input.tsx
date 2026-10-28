@@ -15,10 +15,11 @@ import type { FieldCopyProps } from "./field.js"
 
 /**
  * Arc's control recipe. Text stays at 16px on small screens so iOS does not zoom on focus, hover only answers on
- * hover-capable fine pointers, and the field never changes size on focus or error.
+ * hover-capable fine pointers, and the field never changes size on focus or error. Date and time types drop their
+ * native appearance, which iOS Safari otherwise keeps at its own width, overflowing the column.
  */
 const inputClassName =
-  "min-h-(--control-height-md) w-full min-w-0 rounded-(--radius-control) border border-border-strong bg-surface px-(--space-3) font-sans text-base leading-(--leading-body) tracking-(--tracking-body) text-foreground outline-none transition-[color,background-color,border-color] duration-(--duration-fast) ease-(--ease-standard) motion-reduce:transition-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-text-muted hover-fine:not-disabled:not-aria-invalid:border-foreground focus-visible:border-foreground aria-invalid:border-danger disabled:cursor-not-allowed disabled:bg-surface-muted disabled:opacity-50 md:text-sm"
+  "min-h-(--control-height-md) w-full min-w-0 rounded-(--radius-control) border border-border-strong bg-surface px-(--space-3) font-sans text-base leading-(--leading-body) tracking-(--tracking-body) text-foreground outline-none transition-[color,background-color,border-color] duration-(--duration-fast) ease-(--ease-standard) motion-reduce:transition-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-text-muted hover-fine:not-disabled:not-aria-invalid:border-foreground focus-visible:border-foreground aria-invalid:border-danger [&:is([type=date],[type=datetime-local],[type=time],[type=month],[type=week])]:appearance-none disabled:cursor-not-allowed disabled:bg-surface-muted disabled:opacity-50 md:text-sm"
 
 export type InputProps = ComponentProps<"input"> & FieldCopyProps
 

@@ -11,6 +11,18 @@ const BIO_MAX_LENGTH = 120;
 const LONG_DESCRIPTION =
   "Usamos este correo para enviarte los recibos de cada pago, los avisos de renovación y los cambios importantes de tu tribu, nunca para publicidad.";
 
+/** Date and time fields in a narrow grid column, the layout where iOS Safari kept their native width and overflowed. */
+function DateTimeFields() {
+  return (
+    <div data-testid="date-time-fields" style={{ display: "grid", gridTemplateColumns: "minmax(0, 14rem)", gap: "1rem" }}>
+      <Input type="datetime-local" step="any" label="Desde" />
+      <Input type="datetime-local" step="any" label="Hasta" defaultValue="2026-10-28T18:30" />
+      <Input type="date" label="Fecha" defaultValue="2026-10-28" />
+      <Input type="time" label="Hora" defaultValue="18:30" />
+    </div>
+  );
+}
+
 /** A field inside a horizontal flex row, where it must fill the row like the bare control does. */
 function FlexRowField() {
   return (
@@ -130,6 +142,7 @@ function Fields() {
   return <GolfoUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}><main>
     <h1>Campos</h1>
     <section><FlexRowField /></section>
+    <section><DateTimeFields /></section>
     <section><EmailField /></section>
     <section><BioField /></section>
     <section><MembersField /></section>
