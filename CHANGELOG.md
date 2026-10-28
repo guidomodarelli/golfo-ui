@@ -4,6 +4,8 @@ Todos los cambios relevantes de `@golfo/ui` se documentan en este archivo con el
 
 ## [Unreleased]
 
+## [2.2.1] - 2026-10-28
+
 ### Fixed
 
 - El círculo de `Switch` activado queda centrado en su riel en iOS Safari; antes se veía corrido 1px hacia arriba o hacia abajo.
