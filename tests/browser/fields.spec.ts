@@ -102,6 +102,22 @@ test.describe("with motion", () => {
     await page.evaluate(() => document.fonts.ready.then(() => undefined));
   });
 
+  test("should keep date and time fields inside their column without the native appearance", async ({ page }) => {
+    const column = page.getByTestId("date-time-fields");
+    const columnBox = (await column.boundingBox())!;
+    for (const name of ["Desde", "Hasta", "Fecha", "Hora"]) {
+      const control = page.getByLabel(name, { exact: true });
+      const box = (await control.boundingBox())!;
+      expect(box.x + box.width, name).toBeLessThanOrEqual(columnBox.x + columnBox.width + 0.5);
+      // iOS Safari keeps the native width of a date control, ignoring `width: 100%`, unless its appearance is reset.
+      expect(await control.evaluate((element) => getComputedStyle(element).appearance), name).toBe("none");
+    }
+    // An empty date field keeps the height of one with a value.
+    const empty = (await page.getByLabel("Desde", { exact: true }).boundingBox())!;
+    const filled = (await page.getByLabel("Hasta", { exact: true }).boundingBox())!;
+    expect(empty.height).toBeCloseTo(filled.height, 0);
+  });
+
   test("should fill a horizontal flex row like the bare control", async ({ page }) => {
     const row = page.getByTestId("flex-row");
     const control = page.getByRole("textbox", { name: "Ciudad" });

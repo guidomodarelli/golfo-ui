@@ -4,6 +4,11 @@ Todos los cambios relevantes de `@golfo/ui` se documentan en este archivo con el
 
 ## [Unreleased]
 
+### Fixed
+
+- El círculo de `Switch` activado queda centrado en su riel en iOS Safari; antes se veía corrido 1px hacia arriba o hacia abajo.
+- `Input` de fecha y hora (`date`, `datetime-local`, `time`, `month`, `week`) ocupa el ancho de su columna en iOS Safari; antes conservaba el ancho nativo y se salía del formulario.
+
 ## [2.2.0] - 2026-10-28
 
 ### Changed
