@@ -23,6 +23,21 @@ const REACTION_KICK_SCALE_VELOCITY = 11;
 /** Rotation velocity, in degrees per second, the kick gives the icon. */
 const REACTION_KICK_ROTATE_VELOCITY = -420;
 
+/**
+ * Looks of a disabled reaction. It stays focusable, so it is not `:disabled`; Base UI marks it with `data-disabled`.
+ */
+const DISABLED_REACTION_CLASS =
+  "data-disabled:cursor-not-allowed data-disabled:bg-muted data-disabled:text-muted-foreground data-disabled:hover:bg-muted data-disabled:hover:shadow-none data-disabled:active:bg-muted";
+
+/**
+ * Stops a click on a disabled reaction from reaching its parents, as the click on a native disabled button does not.
+ * @param event - Click on the reaction.
+ */
+function swallowClick(event: MouseEvent<HTMLButtonElement>) {
+  event.preventDefault();
+  event.stopPropagation();
+}
+
 /** Exposes the active color to the icon classes. */
 type ReactionButtonStyle = CSSProperties & { "--golfo-reaction-active-color"?: string };
 
@@ -32,6 +47,10 @@ export interface ReactionButtonProps {
   isActive: boolean;
   count: number;
   onClick: (event: MouseEvent<HTMLButtonElement>) => void;
+  /**
+   * Turns the reaction off without taking it out of the keyboard order: the button keeps its focus (`aria-disabled`),
+   * so a tooltip or hover card on it still opens, and it swallows clicks, so a clickable parent does not react either.
+   */
   isDisabled?: boolean;
   /** Icon of the reaction; it is filled with `activeColor` while active. */
   icon?: ComponentType<SVGProps<SVGSVGElement>>;
@@ -93,9 +112,12 @@ export function ReactionButton({
       data-active={isActive || undefined}
       aria-label={ariaLabel}
       aria-pressed={isActive}
-      className={cn("group/reaction", className)}
+      aria-disabled={isDisabled || undefined}
+      className={cn("group/reaction", DISABLED_REACTION_CLASS, className)}
       disabled={isDisabled}
+      focusableWhenDisabled
       onClick={onClick}
+      onClickCapture={isDisabled ? swallowClick : undefined}
       style={activeColorStyle}
       type="button"
       variant="outline"

@@ -6,6 +6,7 @@ Todos los cambios relevantes de `@golfo/ui` se documentan en este archivo con el
 
 ### Changed
 
+- `ReactionButton` con `isDisabled` sigue en el orden del teclado: queda enfocable con `aria-disabled` (y `data-disabled` para los estilos), así un tooltip o una hover card sobre él se siguen abriendo, y se traga los clicks, así un padre clickeable (como la tarjeta de un mensaje) tampoco reacciona. Antes usaba `disabled` nativo y el consumidor tenía que envolverlo en un elemento enfocable.
 - Cada versión se publica recién cuando el CI completo (incluidas las pruebas de navegador en Chromium y WebKit) termina en verde sobre su commit exacto, que el workflow de release corre por su cuenta; un push posterior a `main` ya no puede cancelar esa validación ni bloquear la publicación.
 
 ## [2.1.2] - 2026-10-22

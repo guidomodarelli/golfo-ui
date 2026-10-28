@@ -114,4 +114,25 @@ describe("ReactionButton", () => {
 
     expect(onClick).not.toHaveBeenCalled();
   });
+
+  it("keeps a disabled reaction focusable and swallows its clicks, so a clickable parent ignores them too", async () => {
+    const user = userEvent.setup();
+    const onClick = vi.fn();
+    const onParentClick = vi.fn();
+    render(
+      // The parent stands for a card that opens on click, like a message in a feed.
+      <div role="presentation" onClick={onParentClick}>
+        <ReactionButton ariaLabel="Me gusta 2" count={2} isActive={false} isDisabled onClick={onClick} />
+      </div>,
+    );
+    const button = screen.getByRole("button", { name: "Me gusta 2" });
+
+    await user.tab();
+    expect(button).toHaveFocus();
+    expect(button).toHaveAttribute("aria-disabled", "true");
+    await user.click(button);
+    await user.keyboard("{Enter}");
+    expect(onClick).not.toHaveBeenCalled();
+    expect(onParentClick).not.toHaveBeenCalled();
+  });
 });
