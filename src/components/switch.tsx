@@ -42,8 +42,10 @@ const switchClassName =
 const trackClassName =
   "relative isolate box-border flex flex-none items-center rounded-(--radius-pill) bg-(--control-track) transition-[background-color] duration-(--duration-fast) ease-(--ease-standard) before:absolute before:inset-0 before:-z-1 before:rounded-[inherit] before:bg-(--control-on) before:opacity-0 before:transition-opacity before:duration-(--duration-standard) before:ease-(--ease-standard) group-data-[state=checked]/switch:before:opacity-100 group-aria-invalid/switch:shadow-[0_0_0_1px_var(--danger)] h-6 w-[42px] p-[3px] motion-reduce:transition-none motion-reduce:before:transition-none"
 
+// No `will-change`: on iOS Safari a permanent layer lets the checked thumb (moved with `transform`) snap about 1px
+// above or below its track's center. Motion promotes the thumb only while it glides.
 const thumbClassName =
-  "pointer-events-none block flex-none rounded-(--radius-pill) bg-(--control-thumb) shadow-(--control-thumb-shadow) will-change-transform transition-[background-color] duration-(--duration-standard) ease-(--ease-standard) group-data-[state=checked]/switch:bg-(--control-thumb-on) h-[18px] motion-reduce:transition-none"
+  "pointer-events-none block flex-none rounded-(--radius-pill) bg-(--control-thumb) shadow-(--control-thumb-shadow) transition-[background-color] duration-(--duration-standard) ease-(--ease-standard) group-data-[state=checked]/switch:bg-(--control-thumb-on) h-[18px] motion-reduce:transition-none"
 
 /** The thumb values last written to the screen, which an interrupted glide continues from. */
 type PaintedThumb = { x: number; width: number; scaleX: number }

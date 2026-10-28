@@ -69,6 +69,25 @@ test("should keep the bare switch on the track's box and glide its thumb to the 
     .toBeCloseTo(SWITCH_THUMB_TRAVEL_PX, 0);
 });
 
+test("should keep the checked thumb centered and off a permanent compositing layer", async ({ page }) => {
+  const toggle = page.getByRole("switch", { name: "Modo compacto" });
+  const thumb = toggle.locator("[data-slot=switch-thumb]");
+  const track = toggle.locator("[data-slot=switch-track]");
+  await toggle.click();
+  await expect(toggle).toBeChecked();
+  // Settings rows center the switch next to wrapped text, so it often lands on a fractional pixel.
+  await page.getByTestId("bare-switch-row").evaluate((row) => { row.style.marginTop = "0.375px"; });
+
+  await expect
+    .poll(async () => (await readBox(thumb)).x + (await readBox(thumb)).width, { timeout: SETTLE_TIMEOUT_MS })
+    .toBeCloseTo((await readBox(track)).x + SWITCH_TRACK_PX.width - 3, 0);
+  const trackBox = await readBox(track);
+  const thumbBox = await readBox(thumb);
+  expect(thumbBox.y - trackBox.y).toBeCloseTo(trackBox.y + trackBox.height - (thumbBox.y + thumbBox.height), 1);
+  // With a permanent layer, iOS Safari draws the translated thumb about 1px above or below its track's center.
+  expect(await thumb.evaluate((element) => getComputedStyle(element).willChange)).toBe("auto");
+});
+
 test("should give a labelled switch the full control height and toggle from its text", async ({ page }) => {
   const toggle = page.getByRole("switch", { name: "Avisos por correo" });
   expect((await readBox(toggle)).height).toBeGreaterThanOrEqual(CONTROL_HEIGHT_PX - PIXEL_TOLERANCE);
