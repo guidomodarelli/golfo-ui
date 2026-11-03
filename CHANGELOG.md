@@ -4,6 +4,8 @@ Todos los cambios relevantes de `@golfo/ui` se documentan en este archivo con el
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-11-03
+
 ### Added
 
 - `SearchFilterBar`: búsqueda, botón «Filtros» con un diálogo para los campos de la app y chips de los filtros aplicados, en una fila que se acomoda a cualquier ancho: al angostarse bajan primero los chips y por último el botón. La búsqueda mide hasta 24rem (se cambia con `--search-filter-bar-search-max`). Enter aplica la búsqueda, el botón cuenta los filtros aplicados y cada chip se puede quitar con `onRemoveFilter`.
