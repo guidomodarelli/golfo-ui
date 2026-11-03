@@ -81,3 +81,4 @@ export { RICH_TEXT_SEGMENT_TYPE, RICH_LINK_KIND } from "./lib/rich-text/link-mar
 export type { RichTextSegment, RichLink } from "./lib/rich-text/link-markdown-types.js";
 export * from "./lib/rich-text/rich-markdown.js";
 export * from "./components/filter-presets-bar.js";
+export * from "./components/search-filter-bar.js";

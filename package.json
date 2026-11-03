@@ -215,6 +215,11 @@
       "import": "./dist/components/filter-presets-bar.js",
       "default": "./dist/components/filter-presets-bar.js"
     },
+    "./search-filter-bar": {
+      "types": "./dist/components/search-filter-bar.d.ts",
+      "import": "./dist/components/search-filter-bar.js",
+      "default": "./dist/components/search-filter-bar.js"
+    },
     "./form": {
       "types": "./dist/components/form.d.ts",
       "import": "./dist/components/form.js",
