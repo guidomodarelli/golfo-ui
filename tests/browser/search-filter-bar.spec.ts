@@ -1,6 +1,7 @@
 /** Measures SearchFilterBar's wrapping row and its dialog in real engines, where flex layout and focus exist. */
 import { expect, test } from "@playwright/test";
 import type { Locator, Page } from "@playwright/test";
+import { samplePaintedBoxes, waitForSettledLayout } from "./motion-recorder.js";
 
 /** Widths, in CSS pixels, between the phone and desktop projects where the row must still wrap cleanly. */
 const INTERMEDIATE_WIDTHS = [300, 320, 600, 700, 900] as const;
@@ -211,4 +212,132 @@ test("should paint the chips with the theme tokens in light and dark", async ({ 
   await page.evaluate(() => document.documentElement.classList.add("dark"));
   await expect.poll(() => chip.evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe(light);
   expect(light).not.toBe("rgba(0, 0, 0, 0)");
+});
+
+/** How long, in milliseconds, frames are sampled around a transition; longer than Arc's slowest dialog and badge swap. */
+const MOTION_SAMPLE_MS = 700;
+
+/** Painted style of one frame of the count inside the filters button. */
+type CountFrame = { labels: string[]; moving: boolean; phases: number };
+
+/**
+ * Samples, on every frame from now on, the labels of the count inside a bar's filters button and whether any of them
+ * is still blurred or offset, so an action fired right after the call is observed from its first frame.
+ * @param page - Page that holds the bar.
+ * @param testId - Section that holds the bar.
+ * @returns One entry per frame.
+ */
+function sampleCountFrames(page: Page, testId: string): Promise<CountFrame[]> {
+  return page.evaluate(
+    ({ testId, durationMs }) =>
+      new Promise<CountFrame[]>((resolve) => {
+        const frames: CountFrame[] = [];
+        const start = performance.now();
+        const tick = () => {
+          const labels = [...document.querySelectorAll<HTMLElement>(`[data-testid="${testId}"] [data-slot=search-filter-bar-trigger] [data-slot=badge-content] span.block`)];
+          frames.push({
+            labels: labels.map((label) => label.textContent ?? ""),
+            // Generations of the whole button label: more than one means "Filtros" itself is crossfading.
+            phases: document.querySelectorAll(`[data-testid="${testId}"] [data-slot=search-filter-bar-trigger] [data-slot=button-label] > span > span`).length,
+            // At rest Motion leaves an identity transform and a 0px blur, so only a real offset or blur counts.
+            moving: labels.some((label) => {
+              const style = getComputedStyle(label);
+              const offset = style.transform === "none" ? 0 : Math.abs(new DOMMatrix(style.transform).m42);
+              const blur = Number(/blur\(([\d.]+)px\)/.exec(style.filter)?.[1] ?? 0);
+              return offset > 0.01 || blur > 0.01;
+            }),
+          });
+          if (performance.now() - start < durationMs) requestAnimationFrame(tick);
+          else resolve(frames);
+        };
+        tick();
+      }),
+    { testId, durationMs: MOTION_SAMPLE_MS },
+  );
+}
+
+test("should play the dialog entrance and exit on real frames and return the focus to the button", async ({ page }) => {
+  const trigger = page.getByTestId("few").getByRole("button", { name: /^Filtros/ });
+  await waitForSettledLayout(trigger);
+  const entrance = samplePaintedBoxes(page, "[data-slot=dialog-content]", MOTION_SAMPLE_MS, { origin: "viewport" });
+  await trigger.click();
+  const opening = await entrance;
+  const dialog = page.getByRole("dialog", { name: "Filtros" });
+  await expect(dialog).toHaveCSS("transform", "none");
+  const rest = await boxOf(dialog);
+  // The panel grows into place over several frames and ends exactly where it rests.
+  expect(opening.length).toBeGreaterThan(2);
+  expect(opening[0]!.width).toBeLessThan(rest.width);
+  expect(opening.at(-1)!.width).toBeCloseTo(rest.width, 0);
+  const exit = samplePaintedBoxes(page, "[data-slot=dialog-content]", MOTION_SAMPLE_MS, { origin: "viewport" });
+  await page.keyboard.press("Escape");
+  // It is still painted on the first frames after Escape, leaving instead of vanishing.
+  expect((await exit).length).toBeGreaterThan(0);
+  await expect(dialog).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+});
+
+test("should land at rest and keep the bar still after a rapid reopen and close", async ({ page }) => {
+  const bar = page.getByTestId("few").locator("[data-slot=search-filter-bar]");
+  const trigger = bar.getByRole("button", { name: /^Filtros/ });
+  await waitForSettledLayout(bar);
+  const before = await boxOf(bar);
+  await trigger.click();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+  // A reopen right after the interrupted entrance still lands at rest.
+  await trigger.click();
+  const dialog = page.getByRole("dialog", { name: "Filtros" });
+  await expect(dialog).toHaveCSS("opacity", "1");
+  await expect(dialog).toHaveCSS("transform", "none");
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+  expect(await boxOf(bar)).toEqual(before);
+});
+
+test("should swap the button count with Arc's motion and settle on the new number", async ({ page }) => {
+  const bar = page.getByTestId("few").locator("[data-slot=search-filter-bar]");
+  await waitForSettledLayout(bar);
+  const frames = sampleCountFrames(page, "few");
+  await bar.getByRole("button", { name: "Quitar Estado: Aprobadas" }).click();
+  const sampled = await frames;
+  // Only the number swaps: the new one rises out of a blur while the old one leaves, then it alone stays, at rest.
+  expect(sampled.some((frame) => frame.moving)).toBe(true);
+  expect(sampled.every((frame) => frame.phases === 1)).toBe(true);
+  expect(sampled.at(-1)).toEqual({ labels: ["1"], moving: false, phases: 1 });
+  await expect(bar.getByRole("button", { name: "Filtros (1 aplicado)" })).toBeVisible();
+});
+
+test.describe("with reduced motion", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+  });
+
+  test("should open and close the dialog without moving it", async ({ page }) => {
+    const trigger = page.getByTestId("few").getByRole("button", { name: /^Filtros/ });
+    await waitForSettledLayout(trigger);
+    const entrance = samplePaintedBoxes(page, "[data-slot=dialog-content]", MOTION_SAMPLE_MS, { origin: "viewport" });
+    await trigger.click();
+    const opening = await entrance;
+    const dialog = page.getByRole("dialog", { name: "Filtros" });
+    await expect(dialog).toHaveCSS("transform", "none");
+    // Every painted frame already has the resting size: nothing scales or slides.
+    const rest = await boxOf(dialog);
+    for (const frame of opening) expect(frame.width).toBeCloseTo(rest.width, 0);
+    await page.keyboard.press("Escape");
+    await expect(dialog).toHaveCount(0);
+    await expect(trigger).toBeFocused();
+  });
+
+  test("should change the button count without blur or offset", async ({ page }) => {
+    const bar = page.getByTestId("few").locator("[data-slot=search-filter-bar]");
+    await waitForSettledLayout(bar);
+    const frames = sampleCountFrames(page, "few");
+    await bar.getByRole("button", { name: "Quitar Estado: Aprobadas" }).click();
+    const sampled = await frames;
+    expect(sampled.every((frame) => !frame.moving)).toBe(true);
+    expect(sampled.at(-1)).toEqual({ labels: ["1"], moving: false, phases: 1 });
+  });
 });

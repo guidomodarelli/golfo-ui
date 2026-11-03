@@ -79,6 +79,24 @@ export function SearchFilterBarFields({ className, ...props }: SearchFilterBarFi
   return <div data-slot="search-filter-bar-fields" className={cn(FIELDS_CLASS_NAME, className)} {...props} />;
 }
 
+/**
+ * The count inside the filters button. It takes the number as a prop, not as children, because Button keys its label
+ * by the text of its children: a count written as children would crossfade the whole "Filtros" label on every change,
+ * while this way the label stays put and only the Badge swaps its number.
+ * @param props - Number of applied filters and its screen reader text.
+ * @returns The visible badge and the hidden text that completes the button's accessible name.
+ */
+function AppliedFiltersCount({ count, label }: { count: number; label: string }) {
+  return (
+    <>
+      <Badge size="sm" aria-hidden="true">
+        {count}
+      </Badge>{" "}
+      <span className="sr-only">{label}</span>
+    </>
+  );
+}
+
 /** Native attributes of the search input; the bar owns its type, value, label and change handler. */
 type SearchInputProps = Omit<ComponentProps<"input">, "type" | "value" | "defaultValue" | "onChange" | "disabled" | "children">;
 
@@ -212,14 +230,7 @@ export function SearchFilterBar({
             <Button ref={triggerRef} type="button" variant="secondary" disabled={disabled} data-slot="search-filter-bar-trigger">
               <SlidersHorizontal aria-hidden="true" />
               {copy.filters}
-              {count > 0 && (
-                <>
-                  <Badge size="sm" aria-hidden="true">
-                    {count}
-                  </Badge>{" "}
-                  <span className="sr-only">{copy.appliedCount(count)}</span>
-                </>
-              )}
+              {count > 0 && <AppliedFiltersCount count={count} label={copy.appliedCount(count)} />}
             </Button>
           </DialogTrigger>
           <DialogContent title={copy.dialogTitle} description={dialogDescription} footer={dialogFooter} className={cn(DIALOG_PANEL_CLASS_NAME, dialogClassName)}>
